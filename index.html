@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og: http://ogp.me/ns#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>#SaveASEANSeas</title>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+<link rel="manifest" href="manifest.json">
+<link rel="mask-icon" href="safari-pinned-tab.svg" color="#068dba">
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bower_components/spectrum/spectrum.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="row">
+    <div class="header col-md-12">
+      <div class="title">
+        #SaveASEANSeas
+      </div>
+      <div class="tagline">
+        Support us to #SaveASEANSeas
+      </div>
+    </div><!-- .header -->
+
+    <div class="app col-md-12">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="preview-box widget">
+            <div class="board">
+              <div id="preview">
+                <div class="name gochi-hand"></div>
+                <div class="image"></div>
+              </div><!-- #preview -->
+            </div>
+          </div><!-- .widget -->
+
+          <div class="canvas-preview-box widget">
+            <div class="board">
+              <canvas id="canvas-preview"></canvas>
+            </div>
+          </div><!-- .widget -->
+
+          <div class="recommended-colors clearfix widget">
+            <div class="title">
+              Recommended colors
+            </div>
+            <div class="colors board">
+
+            </div>
+          </div><!-- .recommended-colors -->
+        </div><!-- .col-md-6 -->
+
+        <div class="col-md-6">
+          <div class="inputs clearfix widget">
+            <div class="board">
+              <div class="input-row">
+                <span class="input-label">Image: </span>
+
+                <div class="upload-btn input-field">
+                  <span>
+                    Choose image
+                  </span>
+                  <input type="file" id="input-upload" value="Choose image" accept="image/*" />
+                </div>
+              </div>
+
+              <div class="input-row">
+                <span class="input-label">Name: </span>
+                <input type="text" id="input-name" name="name" class="input-field" placeholder="Name">
+              </div>
+
+              <div class="input-row">
+                <span class="input-label">Color: </span>
+                <input id="colorpicker" class="input-field">
+              </div>
+
+              <div class="input-row">
+                <span class="input-label">Black name: </span>
+                <div class="switch input-field">
+                  <input id="black-name" class="cmn-toggle cmn-toggle-round-flat" type="checkbox">
+                  <label for="black-name"></label>
+                </div><!-- .switch -->
+              </div>
+            </div><!-- .board -->
+          </div><!-- .inputs -->
+        </div><!-- .col-md-6 -->
+      </div><!-- .row -->
+    </div><!-- .app -->
+  </div><!-- .row -->
+</div><!-- .container -->
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/spectrum/spectrum.js"></script>
+<script src="bower_components/localforage/dist/localforage.min.js"></script>
+<script src="js/script.js"></script>
+<script>
+var appName = '#SaveASEANSeas',
+  $colorpicker = $('#colorpicker'),
+  initColor = '#4194e0',
+  initName = appName,
+  isDebugMode = true,
+  canvasPreviewId = 'canvas-preview',
+  canvas = document.getElementById('canvas-preview'),
+  ctx = canvas.getContext('2d'),
+  dataUriBase64, // original image data
+  canvasWidth = 960,
+  canvasHeight = 960,
+  $canvas = $('#' + canvasPreviewId),
+  html = '';
+
+canvas.width = canvasWidth;
+canvas.height = canvasHeight;
+
+function appLog(msg) {
+  if (isDebugMode) console.log(msg);
+}
+
+function handleImage(e) {
+  var reader = new FileReader();
+
+  reader.onload = function(event) {
+    var img = new Image(),
+      imgWidth,
+      imgHeight;
+
+    img.onload = function() {
+      imgWidth = img.width;
+      imgHeight = img.height;
+
+      // local
+      var localCanvas = document.createElement('canvas'),
+        localCtx = localCanvas.getContext('2d');
+      localCanvas.width = img.width;
+      localCanvas.height = img.height;
+      localCtx.drawImage(img, 0, 0);
+
+      // global
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, imgWidth, imgHeight);
+      dataUriBase64 = localCanvas.toDataURL('image/png');
+
+      Storage.updateImage(dataUriBase64);
+      Preview.updateImage(dataUriBase64);
+    }
+
+    img.src = event.target.result;
+  }
+
+  reader.readAsDataURL(e.target.files[0]);
+}
+
+var Storage = {
+  appPrefix: 'sas-',
+  storageImageKey: this.appPrefix + 'image',
+  storageHistoryColorKey: this.appPrefix + 'history-colors',
+  maxHistoryColor: 32,
+
+  getImage: function(cb) {
+    localforage.getItem(this.storageImageKey, function(err, value) {
+      cb(err, value);
+    });
+  },
+
+  updateImage: function(dataUriBase64, cb) {
+    localforage.setItem(this.storageImageKey, dataUriBase64, function(err) {
+      if (err) appLog(err);
+      if (typeof cb === 'function') cb();
+    });
+  },
+
+  getHistoryColors: function(cb) {
+    localforage.getItem(this.storageHistoryColorKey, function(err, value) {
+      cb(err, value);
+    });
+  },
+
+  uodateHistoryColors: function(historyColors) {
+    localforage.setItem(this.storageHistoryColorKey, historyColors, function(err) {
+      if (err) appLog(err);
+      if (typeof cb === 'function') cb();
+    });
+  },
+
+  addHistoryColor: function(hexCode) {
+    historyColors.unshift(hexCode);
+    historyColors = historyColors.slice(0, this.maxHistoryColor);
+
+    this.updateHistoryColors(historyColors);
+  },
+};
+
+var Convert = {
+
+  base64ToDataUri: function(base64) {
+    return base64.replace(/^data:image\/(png|jpg);base64,/, '');
+  },
+
+  // http://stackoverflow.com/questions/17591148/converting-data-uri-to-image-data
+  dataUriToImageData: function(dataUri) {
+    return new Promise(function(resolve, reject) {
+      if (dataUri == null) return reject();
+
+      var canvas = document.createElement('canvas'),
+        context = canvas.getContext('2d'),
+        image = new Image();
+
+      image.addEventListener('load', function() {
+        canvas.width = image.width;
+        canvas.height = image.height;
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(context.getImageData(0, 0, canvas.width, canvas.height));
+      }, false);
+
+      image.src = dataUri;
+    });
+  },
+};
+
+var Preview = {
+  self: this,
+  recommendedColors: [
+    '#fdda40',
+    '#ffef51',
+    '#fba2b6',
+    '#fdcff4',
+    '#fbafed',
+    '#fd6da0',
+    '#0bc5ba',
+    '#88d85d',
+    '#4cffd7',
+    '#96fd87',
+    '#006c54',
+    '#3e468f',
+    '#bdfdfc',
+    '#4194e0',
+    '#10a2b9',
+    '#068dba',
+    '#ff7f2b',
+    '#ff6f2e',
+    '#770330',
+    '#ff3131',
+  ],
+  $recommendedColorsWidget: $('.recommended-colors'),
+  $recommendedColors: $('.recommended-colors .colors'),
+  $preview: $('#preview'),
+  $previewName: $('#preview .name'),
+  $previewImage: $('#preview .image'),
+  $color: $('.recommended-colors .colors .color'),
+
+  updateImage: function(dataUriBase64) {
+    this.$previewImage.css({
+      'background-image': 'url(' + dataUriBase64 + ')',
+    });
+  },
+
+  /**
+   * Update #preview
+   * 
+   * @param {string} hexCode
+   */
+  updateBackgroundColor: function(hexCode) {
+    this.$preview.css({
+      'background-color': hexCode,
+    });
+  },
+
+  /**
+   * Update preview name
+   * 
+   * @param {string} name
+   */
+  updateName: function(name) {
+    this.$previewName.html(name);
+  },
+
+  updateNameColor: function(hexCode) {
+    this.$previewName.css({
+      'color': hexCode,
+    });
+  },
+
+  // reset to init state
+  // - remove additional class
+  resetRecommendedColors: function() {
+    $('.color').removeClass('active');
+  },
+
+  init: function() {
+    var self = this;
+
+    // render recommended colors
+    var html = '';
+    this.recommendedColors.forEach(function(color) {
+      html += getColorDiv(color);
+    });
+    this.$recommendedColors.html(html);
+
+    // color
+    this.$color = $('.recommended-colors .colors .color');
+    this.$color.on('click', function() {
+      var hexCode;
+
+      // set css class
+      self.resetRecommendedColors();
+      $(this).addClass('active');
+
+      // set preview
+      hexCode = $(this).data('hex-code');
+      updateAllBackgroundColor(hexCode);
+    });
+  }
+};
+
+var CanvasPreview = {
+
+  updateBackgroundImage: function(hexCode) {
+    this.render();
+  },
+
+  render: function() {
+
+  },
+};
+
+var Inputs = {
+  $inputUpload: $('input#input-upload').first(),
+  $inputName: $('input[name=name]').first(),
+  $inputBlackNameCheckbox: $('input#black-name').first(),
+
+  /**
+   * Update input name
+   * 
+   * @param {string} name
+   */
+  updateName: function(name) {
+    this.$inputName.val(name);
+  },
+
+  init: function() {
+
+    // image
+    this.$inputUpload.on('change', handleImage);
+
+    // name
+    this.$inputName.keyup(function() {
+      var name = $(this).val();
+      Preview.updateName(name);
+    });
+
+    // black name
+    this.$inputBlackNameCheckbox.change(function() {
+      var hexCode = ($(this).is(':checked')) ? '#000000' : '#ffffff';
+      Preview.updateNameColor(hexCode);
+    });
+  },
+};
+
+/**
+ * This function will set all previews with hexCode
+ */
+function updateAllBackgroundColor(hexCode) {
+  Preview.updateBackgroundColor(hexCode);
+  CanvasPreview.updateBackgroundImage(hexCode);
+  $colorpicker.spectrum('set', hexCode);
+}
+
+/**
+ * This function will set all previews with hexCode
+ * 
+ * @param {string} name
+ */
+function updateAllNames(name) {
+  Preview.updateName(name);
+  Inputs.updateName(name);
+}
+
+function getColorDiv(hexCode) {
+  return '<div class="color" style="background-color: ' + hexCode + ';" data-hex-code="' + hexCode + '"></div>';
+}
+
+$(function() {
+
+  if (isDebugMode) {
+    $canvas.addClass('show');
+  }
+
+  // setup input - color
+  $colorpicker.spectrum({
+    color: initColor,
+    move: function(color) {
+      var hexCode = color.toHexString();
+      Preview.updateBackgroundColor(hexCode);
+      Preview.resetRecommendedColors();
+    }
+  });
+
+  Preview.init();
+  Inputs.init();
+
+  Storage.getImage(function(err, value) {
+    if (value) {
+      dataUriBase64 = value;
+
+      // http://stackoverflow.com/questions/4773966/drawing-an-image-from-a-data-url-to-a-canvas
+      var img = new Image();
+      img.src = dataUriBase64;
+
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+
+      // set to previewImage
+      Preview.updateImage(dataUriBase64);
+    }
+  });
+
+  updateAllBackgroundColor(initColor);
+  updateAllNames(initName);
+});
+</script>
+</body>
+</html>
