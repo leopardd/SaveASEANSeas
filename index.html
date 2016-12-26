@@ -41,7 +41,13 @@
 
           <div class="canvas-preview-box widget">
             <div class="board">
-              <canvas id="canvas-preview"></canvas>
+              <canvas id="canvas-preview300" class="canvas-preview"></canvas>
+            </div>
+          </div><!-- .widget -->
+
+          <div class="canvas-preview-box widget">
+            <div class="board">
+              <canvas id="canvas-preview960" class="canvas-preview"></canvas>
             </div>
           </div><!-- .widget -->
 
@@ -103,17 +109,30 @@ var appName = '#SaveASEANSeas',
   initColor = '#4194e0',
   initName = appName,
   isDebugMode = true,
-  canvasPreviewId = 'canvas-preview',
-  canvas = document.getElementById('canvas-preview'),
-  ctx = canvas.getContext('2d'),
+
   dataUriBase64, // original image data
-  canvasWidth = 960,
-  canvasHeight = 960,
-  $canvas = $('#' + canvasPreviewId),
+
+  canvasPreview960Id = 'canvas-preview960',
+  canvas960 = document.getElementById(canvasPreview960Id),
+  $canvas960 = $('#' + canvasPreview960Id),
+  ctx960 = canvas960.getContext('2d'),
+  canvas960Width = 960,
+  canvas960Height = 960,
+
+  canvasPreview300Id = 'canvas-preview300',
+  canvas300 = document.getElementById(canvasPreview300Id),
+  $canvas300 = $('#' + canvasPreview300Id),
+  ctx300 = canvas300.getContext('2d'),
+  canvas300Width = 300,
+  canvas300Height = 300,
+
   html = '';
 
-canvas.width = canvasWidth;
-canvas.height = canvasHeight;
+canvas960.width = canvas960Width;
+canvas960.height = canvas960Height;
+
+canvas300.width = canvas300Width;
+canvas300.height = canvas300Height;
 
 function appLog(msg) {
   if (isDebugMode) console.log(msg);
@@ -138,9 +157,14 @@ function handleImage(e) {
       localCanvas.height = img.height;
       localCtx.drawImage(img, 0, 0);
 
-      // global
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, imgWidth, imgHeight);
+      // global 300
+      ctx300.clearRect(0, 0, canvas300.width, canvas300.height);
+      ctx300.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, imgWidth, imgHeight);
+      dataUriBase64 = localCanvas.toDataURL('image/png');
+
+      // global 960
+      ctx960.clearRect(0, 0, canvas960.width, canvas960.height);
+      ctx960.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, imgWidth, imgHeight);
       dataUriBase64 = localCanvas.toDataURL('image/png');
 
       Storage.updateImage(dataUriBase64);
@@ -184,14 +208,14 @@ var Convert = {
       if (dataUri == null) return reject();
 
       var canvas = document.createElement('canvas'),
-        context = canvas.getContext('2d'),
+        ctx = canvas.getContext('2d'),
         image = new Image();
 
       image.addEventListener('load', function() {
         canvas.width = image.width;
         canvas.height = image.height;
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(context.getImageData(0, 0, canvas.width, canvas.height));
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(ctx.getImageData(0, 0, canvas.width, canvas.height));
       }, false);
 
       image.src = dataUri;
@@ -364,7 +388,8 @@ function getColorDiv(hexCode) {
 $(function() {
 
   if (isDebugMode) {
-    $canvas.addClass('show');
+    $canvas960.addClass('show');
+    $canvas300.addClass('show');
   }
 
   // setup input - color
@@ -388,7 +413,8 @@ $(function() {
       var img = new Image();
       img.src = dataUriBase64;
 
-      ctx.drawImage(img, 0, 0, img.width, img.height);
+      ctx960.drawImage(img, 0, 0, img.width, img.height);
+      ctx300.drawImage(img, 0, 0, img.width, img.height);
 
       // set to previewImage
       Preview.updateImage(dataUriBase64);
