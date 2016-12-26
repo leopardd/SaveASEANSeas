@@ -126,6 +126,7 @@ var appName = '#SaveASEANSeas',
   canvas300Width = 300,
   canvas300Height = 300,
 
+  defaultImagePath = 'images/baby.png';
   html = '';
 
 canvas960.width = canvas960Width;
@@ -175,6 +176,37 @@ function handleImage(e) {
   }
 
   reader.readAsDataURL(e.target.files[0]);
+}
+
+/**
+ * Get ImageData
+ * used for default image only
+ * used for this app only
+ * 
+ * @see https://davidwalsh.name/convert-image-data-uri-javascript
+ * @see http://stackoverflow.com/questions/934012/get-image-data-in-javascript
+ *
+ * @param {string}   url
+ * @param {Function} callback callback function
+ */
+function getImageDataUriBase64(url, cb) {
+  var image = new Image();
+
+  image.onload = function() {
+    var canvas = document.createElement('canvas'),
+      ctx = canvas.getContext('2d'),
+      dataUriBase64;
+    
+    canvas.width = this.width;
+    canvas.height = this.height;
+    ctx.drawImage(this, 0, 0);
+    dataUriBase64 = canvas.toDataURL('image/png');
+
+    if (typeof cb === 'function') cb(dataUriBase64);
+  };
+
+  image.src = url;
+  image.style.display = 'none';
 }
 
 var Storage = {
@@ -406,18 +438,32 @@ $(function() {
   Inputs.init();
 
   Storage.getImage(function(err, value) {
+    // http://stackoverflow.com/questions/4773966/drawing-an-image-from-a-data-url-to-a-canvas
+    var img = new Image();
+
     if (value) {
       dataUriBase64 = value;
 
-      // http://stackoverflow.com/questions/4773966/drawing-an-image-from-a-data-url-to-a-canvas
-      var img = new Image();
+      // TODO: refactor
       img.src = dataUriBase64;
-
       ctx960.drawImage(img, 0, 0, img.width, img.height);
       ctx300.drawImage(img, 0, 0, img.width, img.height);
-
-      // set to previewImage
       Preview.updateImage(dataUriBase64);
+
+    } else {
+      // load default image instead
+      getImageDataUriBase64(defaultImagePath, function(base64) {
+        dataUriBase64 = base64;
+
+        // TODO: refactor
+        img.src = dataUriBase64;
+        ctx960.drawImage(img, 0, 0, img.width, img.height);
+        ctx300.drawImage(img, 0, 0, img.width, img.height);
+        Preview.updateImage(dataUriBase64);
+
+        // save
+        Storage.updateImage(dataUriBase64);
+      });
     }
   });
 
