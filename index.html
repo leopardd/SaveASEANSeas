@@ -156,8 +156,7 @@ function handleImage(e) {
 var Storage = {
   appPrefix: 'sas-',
   storageImageKey: this.appPrefix + 'image',
-  storageHistoryColorKey: this.appPrefix + 'history-colors',
-  maxHistoryColor: 32,
+
 
   getImage: function(cb) {
     localforage.getItem(this.storageImageKey, function(err, value) {
@@ -170,26 +169,6 @@ var Storage = {
       if (err) appLog(err);
       if (typeof cb === 'function') cb();
     });
-  },
-
-  getHistoryColors: function(cb) {
-    localforage.getItem(this.storageHistoryColorKey, function(err, value) {
-      cb(err, value);
-    });
-  },
-
-  uodateHistoryColors: function(historyColors) {
-    localforage.setItem(this.storageHistoryColorKey, historyColors, function(err) {
-      if (err) appLog(err);
-      if (typeof cb === 'function') cb();
-    });
-  },
-
-  addHistoryColor: function(hexCode) {
-    historyColors.unshift(hexCode);
-    historyColors = historyColors.slice(0, this.maxHistoryColor);
-
-    this.updateHistoryColors(historyColors);
   },
 };
 
