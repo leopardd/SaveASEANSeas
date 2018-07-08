@@ -3,16 +3,16 @@
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nathaa/SaveASEANSeas.git"
+    "url": "git+https://github.com/leopardd/SaveASEANSeas.git"
   },
   "keywords": [
   ],
   "author": "Nathachai Thongniran <inid3a@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nathaa/SaveASEANSeas/issues"
+    "url": "https://github.com/leopardd/SaveASEANSeas/issues"
   },
-  "homepage": "https://github.com/nathaa/SaveASEANSeas#readme",
+  "homepage": "https://github.com/leopardd/SaveASEANSeas#readme",
   "devDependencies": {
     "browser-sync": "^2.10.1",
     "chai": "^3.5.0",

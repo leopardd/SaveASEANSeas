@@ -1,3 +1,8 @@
+# IDE & editor
+.idea
+.vscode
+.history
+
 # dependency
 node_modules
 bower_components
